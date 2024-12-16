@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "555934121480",
+    "project_id": "taste-guide-app",
+    "storage_bucket": "taste-guide-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:555934121480:android:4f90a7d45b8255a2a2dbbd",
+        "android_client_info": {
+          "package_name": "com.example.taste_guide_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeccn8XWmXsu1es-rzyyFJepVWsgi3Md0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
