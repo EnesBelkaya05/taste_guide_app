@@ -12,8 +12,6 @@ class RecipeSelectorPage extends StatefulWidget {
 
 ApiService apiService = new ApiService();
 
-//Armin Büyük ADAMDIR.
-
 class _RecipeSelectorPageState extends State<RecipeSelectorPage> {
   final List<String> recipeTypes = ['Vegetarian', 'Vegan', 'Meat', 'Dessert'];
   final List<String> selectedIngredients = [];
