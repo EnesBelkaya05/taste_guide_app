@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class RecipeSuggestionsPage extends StatefulWidget {
+  final List<dynamic> recipes;  // Accept recipes as a named parameter
   final String? selectedType;
   final List<String> ingredients;
 
-  const RecipeSuggestionsPage({super.key, this.selectedType, required this.ingredients});
+  const RecipeSuggestionsPage({super.key, required this.recipes, this.selectedType, required this.ingredients});
 
   @override
   State<RecipeSuggestionsPage> createState() => _RecipeSuggestionsPageState();
@@ -24,22 +25,23 @@ class _RecipeSuggestionsPageState extends State<RecipeSuggestionsPage> {
   }
 
   Future<void> fetchRecipes() async {
-    final String appId = 'bf3a091f'; // Edamam API'den aldığınız App ID
-    final String appKey = '995b24cbd81c5d77b32217aeecf96a1a'; // Edamam API'den aldığınız App Key
+    final String appKey = 'b4ed831429f1480aab3428592ef29776';
 
     // Malzemeleri virgülle ayırarak birleştirin
     final String ingredientsQuery = widget.ingredients.join(',');
 
     // API isteği için URL
-    final String apiUrl =
-        'https://api.edamam.com/search?q=$ingredientsQuery&app_id=$appId&app_key=$appKey&health=${widget.selectedType?.toLowerCase()}';
+    final String apiUrl = 'https://api.spoonacular.com/recipes/complexSearch?apiKey=$appKey&query=$ingredientsQuery&diet=${widget.selectedType?.toLowerCase()}&number=10';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print("API Response: $data");  // Yanıtı console'a yazdırıyoruz
+
         setState(() {
-          recipes = data['hits'];
+          // Verileri güvenli bir şekilde alıyoruz
+          recipes = data['results'] ?? [];
           isLoading = false;
           hasError = false;
         });
@@ -73,20 +75,24 @@ class _RecipeSuggestionsPageState extends State<RecipeSuggestionsPage> {
         padding: const EdgeInsets.all(16.0),
         itemCount: recipes.length,
         itemBuilder: (context, index) {
-          final recipe = recipes[index]['recipe'];
+          final recipe = recipes[index];
+
+          // Null kontrolü ile map işlemini güvenli hale getiriyoruz
+          final ingredients = recipe['ingredientLines'] ?? []; // ingredientLines null kontrolü
+
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: ListTile(
               leading: Image.network(
-                recipe['image'],
+                recipe['image'] ?? '', // Görsel URL'si için null kontrolü
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
               ),
-              title: Text(recipe['label']),
-              subtitle: Text('Calories: ${recipe['calories'].toStringAsFixed(2)}'),
+              title: Text(recipe['title'] ?? 'No title available'), // Title için null kontrolü
+              subtitle: Text('Calories: ${recipe['calories']?.toStringAsFixed(2) ?? 'N/A'}'), // Calories için null kontrolü
               onTap: () {
-                // Detay sayfasına gitme fonksiyonu (opsiyonel)
+                // Detay sayfasına gitme fonksiyonu
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -109,26 +115,37 @@ class RecipeDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // API yanıtında ilgili anahtarların olup olmadığını kontrol ediyoruz
+    final String title = recipe['title'] ?? 'No title available';
+    final String image = recipe['image'] ?? '';
+    final String readyInMinutes = recipe['readyInMinutes']?.toString() ?? 'N/A'; // Null kontrolü
+    final List<dynamic> extendedIngredients = recipe['extendedIngredients'] ?? []; // Null kontrolü
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(recipe['label']),
+        title: Text(title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(recipe['image']),
+            Image.network(image),  // Görseli ekliyoruz
             const SizedBox(height: 16),
             Text(
-              recipe['label'],
+              title,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            Text('Calories: ${recipe['calories'].toStringAsFixed(2)}'),
+            Text('Ready in: $readyInMinutes minutes'), // Süreyi ekliyoruz
             const SizedBox(height: 16),
-            Text('Ingredients:', style: const TextStyle(fontSize: 18)),
-            ...recipe['ingredientLines'].map((line) => Text('- $line')).toList(),
+            const Text('Ingredients:', style: TextStyle(fontSize: 18)),
+            ...extendedIngredients.map((ingredient) {
+              return Text('- ${ingredient['originalString'] ?? 'N/A'}'); // Null kontrolü
+            }).toList(),
+            const SizedBox(height: 16),
+            const Text('Instructions:', style: TextStyle(fontSize: 18)),
+            Text(recipe['instructions'] ?? 'No instructions available'), // Talimatlar için null kontrolü
           ],
         ),
       ),

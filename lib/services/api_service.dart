@@ -2,16 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String _apiKey = '995b24cbd81c5d77b32217aeecf96a1a';
-  final String _appId = 'bf3a091f';
-  final String _baseUrl = 'https://api.edamam.com/api/recipes/v2';
 
-  String getApiKey(){
+  final String _apiKey = 'b4ed831429f1480aab3428592ef29776'; // Replace with your Spoonacular API key
+  final String _baseUrl = 'https://api.spoonacular.com/recipes/complexSearch';
+
+  String getApiKey() {
     return _apiKey;
-  }
-
-  String getApiId(){
-    return _appId;
   }
 
   Future<List<dynamic>> fetchRecipeSuggestions(String type, List<String> ingredients) async {
@@ -19,7 +15,7 @@ class ApiService {
     final query = ingredients.join(',');
 
     // API URL'si
-    final url = '$_baseUrl?type=public&q=$query&app_id=$_appId&app_key=$_apiKey&health=${type.toLowerCase()}';
+    final url = '$_baseUrl?apiKey=$_apiKey&query=$query&diet=$type&number=10';
 
     try {
       // API isteği gönder
@@ -30,7 +26,7 @@ class ApiService {
         final data = json.decode(response.body);
 
         // Tarif sonuçlarını döndür
-        return data['hits'] ?? [];
+        return data['results'] ?? [];
       } else {
         // Yanıt hatası durumunda
         throw Exception('Failed to load recipes. Status code: ${response.statusCode}');
