@@ -14,6 +14,7 @@ class RecipeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Recipe Selector',
       theme: ThemeData(
         primarySwatch: Colors.green,

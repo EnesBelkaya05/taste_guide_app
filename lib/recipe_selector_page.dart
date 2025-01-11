@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'services/api_service.dart';
-import 'recipe_suggestions_page.dart'; // Import the new page
+import 'recipe_suggestions_page.dart';
 
 class RecipeSelectorPage extends StatefulWidget {
   const RecipeSelectorPage({super.key});
@@ -11,15 +10,12 @@ class RecipeSelectorPage extends StatefulWidget {
   _RecipeSelectorPageState createState() => _RecipeSelectorPageState();
 }
 
-ApiService apiService = new ApiService();
-
 class _RecipeSelectorPageState extends State<RecipeSelectorPage> {
   final List<String> recipeTypes = ['Vegetarian', 'Vegan', 'Meat', 'Dessert'];
   final List<String> selectedIngredients = [];
   String? selectedType;
   bool isLoading = false;
 
-  // This function will fetch the recipes and navigate to RecipeSuggestionsPage
   Future<void> fetchRecipes() async {
     if (selectedType == null || selectedIngredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -33,26 +29,21 @@ class _RecipeSelectorPageState extends State<RecipeSelectorPage> {
     });
 
     final String ingredients = selectedIngredients.join(',');
-
-    // Burada API URL'sini doğru API anahtarıyla güncellediğinizden emin olun
-    final String url = 'https://api.spoonacular.com/recipes/complexSearch?apiKey=b4ed831429f1480aab3428592ef29776&query=$ingredients&diet=$selectedType&number=10';
+    final String url =
+        'https://api.spoonacular.com/recipes/complexSearch?apiKey=b4ed831429f1480aab3428592ef29776&query=$ingredients&diet=$selectedType&number=10';
 
     try {
       final response = await http.get(Uri.parse(url));
-
-      // API yanıtını kontrol et
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> recipes = data['results'];
-
-        // Tarife yönlendirme
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => RecipeSuggestionsPage(
-              recipes: recipes,  // Tarifleri burada geçiriyoruz
-              selectedType: selectedType,  // Seçilen diyet türünü geçiriyoruz
-              ingredients: selectedIngredients,  // Seçilen malzemeleri geçiriyoruz
+              recipes: recipes,
+              selectedType: selectedType,
+              ingredients: selectedIngredients,
             ),
           ),
         );
@@ -76,63 +67,103 @@ class _RecipeSelectorPageState extends State<RecipeSelectorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Selector'),
+        title: const Text('Recipe Selector', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Select Recipe Type:', style: TextStyle(fontSize: 18)),
-            DropdownButton<String>(
-              value: selectedType,
-              hint: const Text('Choose a type'),
-              items: recipeTypes.map((type) {
-                return DropdownMenuItem(
-                  value: type.toLowerCase(),
-                  child: Text(type),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedType = value;
-                });
-              },
+      body: Stack(
+        children: [
+          // Arka plan görseli
+          Positioned.fill(
+            child: Image.asset(
+              'assets/image.jpeg.jpg', // Burada doğru dosya yolunu belirtin
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: 20),
-            const Text('Enter Ingredients:', style: TextStyle(fontSize: 18)),
-            TextField(
-              onSubmitted: (value) {
-                setState(() {
-                  selectedIngredients.add(value);
-                });
-              },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Enter an ingredient and press enter',
+          ),
+          // İçerik
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Select Recipe Type:',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButton<String>(
+                      value: selectedType,
+                      hint: const Text('Choose a type', style: TextStyle(color: Colors.white)),
+                      dropdownColor: Colors.grey[800], // Açılır menü arka planı
+                      style: const TextStyle(color: Colors.white), // Açılır menü yazı rengi
+                      items: recipeTypes.map((type) {
+                        return DropdownMenuItem(
+                          value: type.toLowerCase(),
+                          child: Text(type),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedType = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Enter Ingredients:',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      onSubmitted: (value) {
+                        setState(() {
+                          selectedIngredients.add(value);
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white70,
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter an ingredient and press enter',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: selectedIngredients.map((ingredient) {
+                        return Chip(
+                          label: Text(ingredient),
+                          onDeleted: () {
+                            setState(() {
+                              selectedIngredients.remove(ingredient);
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : fetchRecipes,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white70,
+                        ),
+                        child: isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text(
+                          'Find Recipes',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              children: selectedIngredients.map((ingredient) {
-                return Chip(
-                  label: Text(ingredient),
-                  onDeleted: () {
-                    setState(() {
-                      selectedIngredients.remove(ingredient);
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: isLoading ? null : fetchRecipes,
-              child: isLoading ? const CircularProgressIndicator() : const Text('Find Recipes'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
